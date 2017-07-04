@@ -1,82 +1,50 @@
-#pragma once
-
 #include <iostream>
-#include <map>
-
+#include <fstream>
 using namespace std;
 
-class Part
-{
-    friend void add_part(const string&, int, const string&);
-public:
-    Part(const string &n) : name(n){}
-    void describe(void);
-    int count_howmany(const Part *p);
-    int myCount(map<Part*, int>& myMap, const Part *p, int num);
+#include "parts.h"
 
-private:
-    string name;
-    map<Part*, int> subparts;
-};
-
-class NameContainer
+void load(char* filename)
 {
-public:
-    NameContainer(void) {}
-    Part* loopup(const string &name)
+    ifstream in(filename);
+    string part, subpart;
+    int quantity;
+    if (!in) return;
+    while (in)
     {
-        if (this->name_map.find(name) == this->name_map.end())
-        {
-            Part* part = new Part(name);
-            name_map.insert(pair<std::string, Part*>(name, part));
-            return part;
-        }
-        else
-            return (name_map.find(name))->second;
-    }
-    ~NameContainer()
-    {
-        for (map<std::string, Part*>::iterator i = name_map.begin(); i != name_map.end(); ++i)
-            delete i->second;
-    }
-private:
-    map<std::string, Part*> name_map;
-};
-
-NameContainer partContainer;
-//列出part的名字，及其所有subparts与其对应的数量
-//并使用游标处理subparts
-void Part::describe(void)
-{
-    cout << "part " << this->name << " subparts are : " << endl;
-    if (subparts.empty())
-    {
-        cout << "There is no subparts!!!" << endl;
-        return;
-    }
-    for (map<Part*, int>::iterator it = this->subparts.begin(); it != this->subparts.end(); ++it)
-        cout << it->second << " " << it->first->name << endl;
-}
-int Part::count_howmany(const Part *p)
-{
-    return myCount(this->subparts, p, 1);
-}
-int Part::myCount(map<Part*, int>& myMap, const Part *p, int num)
-{
-    if (myMap.empty()) return 0;
-    for (std::map<Part*, int>::iterator it = myMap.begin(); it != myMap.end(); ++it)
-    {
-        num = num * (it->second);
-        if (it->first->name == p->name) return num;
-        else if (myCount(it->first->subparts, p, num) == 0) num = num / (it->second);
-        else return myCount(it->first->subparts, p, num);
+        in >> part >> quantity >> subpart;
+        add_part(part, quantity, subpart);
     }
 }
-
-//全局函数
-void add_part(const string& x, int q, const string &y)
+void whatis(const string &x)
 {
-    Part* px = partContainer.loopup(x);
-    Part* py = partContainer.loopup(y);
-    px->subparts.insert(make_pair(py, q));
+    Part* xp = partContainer.loopup(x);
+    cout << endl;
+    xp->describe();
+}
+void howmany(const string& x, const string& y)
+{
+    Part* xp = partContainer.loopup(x);
+    Part* yp = partContainer.loopup(y);
+    cout << endl << y << " has " << yp->count_howmany(xp) << " " << x << endl;
+}
+void process(char* filename)
+{
+    ifstream in(filename);
+    string query, x, y;
+    if (!in) return;
+    while (in)
+    {
+        in >> query >> x;
+        if (query == "howmany") in >> y;
+        if (query == "howmany") howmany(x, y);
+        else if (query == "whatis") whatis(x);
+        else { cerr << "Error!!!Can not query " << query << endl; return; }
+    }
+}
+int main()
+{
+    load("d:\\a.txt");
+    process("d:\\b.txt");
+    return 0;
 }
